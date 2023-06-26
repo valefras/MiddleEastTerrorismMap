@@ -1,17 +1,17 @@
 <template>
   <div
-    class="absolute w-1/4 top-0 right-0 m-6 bg-gray-800 text-gray-100 p-4 rounded-md text-xl"
+    class="absolute w-1/4 top-0 right-0 m-6 bg-gray-800 text-gray-100 p-4 rounded-md"
   >
     <div class="font-bold text-2xl text-center mb-2">Attack Info</div>
-    <div class="text-gray-400 text-base">Date</div>
+    <div class="text-gray-400 text-sm">Date</div>
     <div class="mb-2">{{ date }}</div>
-    <div class="text-gray-400 text-base">Summary</div>
+    <div class="text-gray-400 text-sm">Summary</div>
     <div class="mb-2">{{ summary }}</div>
-    <div class="text-gray-400 text-base">Number of casualties</div>
+    <div class="text-gray-400 text-sm">Number of casualties</div>
     <div class="mb-2">{{ nkill }}</div>
-    <div class="text-gray-400 text-base">Number of wounded</div>
+    <div class="text-gray-400 text-sm">Number of wounded</div>
     <div class="mb-2">{{ nwound }}</div>
-    <div class="text-gray-400 text-base">Perpetrators</div>
+    <div class="text-gray-400 text-sm">Perpetrators</div>
     <div class="mb-2">{{ gname }}</div>
   </div>
 </template>

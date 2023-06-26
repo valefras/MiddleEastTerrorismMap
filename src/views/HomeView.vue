@@ -7,13 +7,32 @@
     <AttackInfo :attackData="attackData" v-if="showInfo" />
     <transition>
       <div
-        class="absolute m-4 top-0 left-0 text-gray-100 text-8xl font-bold"
+        class="absolute m-4 top-0 left-0 text-gray-800 text-8xl font-bold"
         v-if="zoom < 6"
       >
         Terrorist attacks in the Middle East (1990-2022)
       </div>
+      <div
+        class="absolute m-4 top-0 left-0 bg-gray-100 p-2 text-gray-800 flex flex-col items-start rounded"
+        v-else
+      >
+        <div>
+          <img src="@/assets/yellow.png" class="h-4 w-4 inline-block" />
+          0 casualties
+        </div>
+        <div>
+          <img src="@/assets/orange.png" class="h-4 w-4 inline-block" />
+          1+ casualties
+        </div>
+        <div>
+          <img src="@/assets/red.png" class="h-4 w-4 inline-block" />
+          10+ casualties
+        </div>
+      </div>
     </transition>
-    <div class="absolute m-4 bottom-0 left-0 text-gray-100 text-5xl">
+    <div
+      class="absolute m-4 bottom-0 left-0 text-gray-800 text-6xl font-semibold"
+    >
       {{ nameHover }}
     </div>
   </div>
@@ -31,13 +50,14 @@ import { onMounted, ref, watch } from "vue";
 // import axios from "axios";
 // import "heatmap.js";
 // import HeatmapOverlay from "heatmap.js/plugins/leaflet-heatmap";
-import "overlapping-marker-spiderfier-leaflet/dist/oms";
+// import "overlapping-marker-spiderfier-leaflet/dist/oms";
 // import { point, featureCollection } from "@turf/helpers";
 // import envelope from "@turf/envelope";
 // // import difference from "@turf/difference";
 // // import booleanWithin from "@turf/boolean-within";
 // import within from "@turf/within";
-import me_geojson from "@/assets/middle_east_reg.geojson";
+import geojson_reg from "@/assets/middle_east_reg.geojson";
+import geojson_cou from "@/assets/ME_eurostat.geojson";
 import orange from "@/assets/orange.png";
 import yellow from "@/assets/yellow.png";
 import red from "@/assets/red.png";
@@ -62,16 +82,19 @@ export default {
     let attackPoints;
     // let layerGroup;
     // let oms;
-    let cloroplethLayer;
+    let cloroplethLayerReg;
+    let cloroplethLayerCou;
+    let geojsonDataCou;
+    let geojsonDataReg;
     let geojson_markerCluster;
+    let cloroDataReg;
+    let cloroDataCou;
     // let data;
     // let prev_bounds;
     // let markers = [];
-    let cloroData;
     const attackData = ref();
     // const attackId = ref(0);
     const showInfo = ref(false);
-    let geojsonData;
     let markerClusterLayer;
 
     var yellow_icon = L.icon({
@@ -150,7 +173,7 @@ export default {
 
     //       cloroData = resultObject;
 
-    //       cloroplethLayer = L.geoJson(geojsonData, {
+    //       cloroplethLayerReg = L.geoJson(geojsonData, {
     //         style: style,
     //         onEachFeature: function (feature, layer) {
     //           layer.on({
@@ -170,7 +193,7 @@ export default {
     //           });
     //         },
     //       });
-    //       cloroplethLayer.addTo(map);
+    //       cloroplethLayerReg.addTo(map);
     //     })
     //     .catch((err) => {
     //       console.log(err);
@@ -287,10 +310,22 @@ export default {
     //     // markerClusterLayer.addTo(map);
     //   }
     // }
-    function style(feature) {
+    function styleReg(feature) {
       // console.log(feature.properties["NAME_1"], cloroData);
       return {
-        fillColor: getColor(cloroData[feature.properties["NAME_1"]]),
+        fillColor: getColor(cloroDataReg[feature.properties["NAME_1"]]),
+        weight: 2,
+        opacity: 1,
+        color: "white",
+        dashArray: "3",
+        fillOpacity: 0.7,
+      };
+    }
+
+    function styleCou(feature) {
+      // console.log(feature.properties["NAME_1"], cloroData);
+      return {
+        fillColor: getColor(cloroDataCou[feature.properties["NAME_ENGL"]]),
         weight: 2,
         opacity: 1,
         color: "white",
@@ -316,18 +351,13 @@ export default {
         ? "#FFFF33"
         : "#FFEDA0";
     }
-    async function createCloroData() {
+    async function createCloroData(mode) {
       let toRtn = {};
       for (let i = 0; i < attackPoints.features.length; i++) {
-        if (
-          Object.hasOwn(
-            toRtn,
-            attackPoints.features[i].properties["corr_provstate"]
-          )
-        ) {
-          toRtn[attackPoints.features[i].properties["corr_provstate"]] += 1;
+        if (Object.hasOwn(toRtn, attackPoints.features[i].properties[mode])) {
+          toRtn[attackPoints.features[i].properties[mode]] += 1;
         } else {
-          toRtn[attackPoints.features[i].properties["corr_provstate"]] = 1;
+          toRtn[attackPoints.features[i].properties[mode]] = 1;
         }
       }
       return toRtn;
@@ -335,15 +365,18 @@ export default {
     onMounted(async () => {
       loading.value = true;
       attackPoints = await attacks;
-      geojsonData = await me_geojson;
-      cloroData = await createCloroData();
+      geojsonDataReg = await geojson_reg;
+      geojsonDataCou = await geojson_cou;
+      cloroDataReg = await createCloroData("corr_provstate");
+      cloroDataCou = await createCloroData("corr_country");
+
       loading.value = false;
 
-      // me_geojson = axios
+      // geojson_reg = axios
       //   .get("../assets/middle_east.geojson")
       //   .then((res) => console.log(res.data))
       //   .catch((err) => console.log(err));
-      // console.log(me_geojson);
+      // console.log(geojson_reg);
       let baseLayer = L.tileLayer(
         "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
@@ -398,14 +431,14 @@ export default {
 
       markerClusterLayer.addLayer(geojson_markerCluster);
 
-      cloroplethLayer = L.geoJson(geojsonData, {
-        style: style,
+      cloroplethLayerReg = L.geoJson(geojsonDataReg, {
+        style: styleReg,
         onEachFeature: function (feature, layer) {
           layer.on({
             mouseover: function (e) {
               let region = e.target.feature.properties["NAME_1"];
-              let att_num = Object.hasOwn(cloroData, region)
-                ? cloroData[e.target.feature.properties["NAME_1"]]
+              let att_num = Object.hasOwn(cloroDataReg, region)
+                ? cloroDataReg[e.target.feature.properties["NAME_1"]]
                 : 0;
               nameHover.value = region + ": " + att_num + " attacks";
             },
@@ -419,7 +452,31 @@ export default {
         },
       });
 
-      cloroplethLayer.addTo(map);
+      // cloroplethLayerReg.addTo(map);
+
+      cloroplethLayerCou = L.geoJson(geojsonDataCou, {
+        style: styleCou,
+        onEachFeature: function (feature, layer) {
+          layer.on({
+            mouseover: function (e) {
+              let country = e.target.feature.properties["NAME_ENGL"];
+              let att_num = Object.hasOwn(cloroDataCou, country)
+                ? cloroDataCou[e.target.feature.properties["NAME_ENGL"]]
+                : 0;
+              nameHover.value = country + ": " + att_num + " attacks";
+            },
+            mouseout: function () {
+              nameHover.value = "";
+            },
+            click: function (e) {
+              map.fitBounds(e.target.getBounds());
+            },
+          });
+        },
+      });
+
+      cloroplethLayerCou.addTo(map);
+
       // L.control
       //   .zoom({
       //     position: "bottomright",
@@ -523,23 +580,30 @@ export default {
       if (zoom.value == 5) {
         showInfo.value = false;
       }
-      if (zoom.value <= 10) {
+      if (zoom.value <= 6) {
+        if (cloroplethLayerReg != null) {
+          map.removeLayer(cloroplethLayerReg);
+        }
+        map.addLayer(cloroplethLayerCou);
+      } else if (zoom.value <= 10 && zoom.value > 6) {
         console.log("display cloro");
         // if (layerGroup != null) {
         //   map.removeLayer(layerGroup);
         // }
+        map.removeLayer(cloroplethLayerCou);
+
         if (markerClusterLayer != null) {
           map.removeLayer(markerClusterLayer);
         }
-        // if (cloroplethLayer == null) {
-        map.addLayer(cloroplethLayer);
+        // if (cloroplethLayerReg == null) {
+        map.addLayer(cloroplethLayerReg);
         // }
 
         // map.addLayer(heatmapLayer);
         // map.removeLayer(layerGroup);
       } else {
         // await displayAttackMarkers();
-        map.removeLayer(cloroplethLayer);
+        map.removeLayer(cloroplethLayerReg);
 
         console.log("display markers");
 
@@ -560,9 +624,6 @@ export default {
 };
 </script>
 <style>
-.leaflet-tile {
-  filter: invert(0.95);
-}
 /* we will explain what these classes do next! */
 .v-enter-active,
 .v-leave-active {
