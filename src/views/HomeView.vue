@@ -269,15 +269,18 @@ export default {
 
           [43.35145642514104, 24.25375932486969],
         ],
-        zoomControl: true,
-        zoomDelta: 0.1,
-        zoomSnap: 0,
+        zoomControl: false,
+
         layers: [],
       }).setView([27, 38.25], 5);
 
       L.control
         .zoom({
           position: "bottomright",
+          zoomDelta: 0.1,
+          zoomSnap: 0,
+          // zoomDelta: 0.1,
+          // zoomSnap: 0,
         })
         .addTo(map);
 
